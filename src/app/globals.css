@@ -1,0 +1,301 @@
+@import "tailwindcss";
+
+/*
+ * MeDan design tokens — luxury-hospitality register.
+ *
+ * Gold is the only accent and it is used sparingly: rules, small-caps labels,
+ * and the one action per screen that matters. Everything else is ink on cream.
+ * Restraint is what reads as expensive; a gold button next to a gold badge
+ * next to a gold border reads as a discount site.
+ */
+:root {
+  /* Champagne/brass accent */
+  --gold-50: #faf7ef;
+  --gold-100: #f2ead6;
+  --gold-200: #e4d3ac;
+  --gold-300: #d3bb81;
+  --gold-400: #c5a55f;
+  --gold-500: #b4904a;
+  --gold-600: #96763a;
+  --gold-700: #755c2e;
+
+  /* Warm neutrals — cream paper, not white */
+  --canvas: #f4f2ee;
+  --surface: #ffffff;
+  --surface-alt: #faf9f7;
+
+  --ink-900: #14110e;
+  --ink-800: #241f1a;
+  --ink-700: #4a433b;
+  --ink-500: #8a8178;
+  --ink-300: #b5aca1;
+  --ink-100: #e5dfd6;
+  --ink-50: #f0ece5;
+
+  --radius-card: 0.25rem; /* near-square: editorial, not app-like */
+  --shadow-card: 0 1px 2px rgb(20 17 14 / 0.03), 0 12px 32px -20px rgb(20 17 14 / 0.25);
+  --shadow-lift: 0 2px 6px rgb(20 17 14 / 0.05), 0 26px 50px -24px rgb(20 17 14 / 0.35);
+}
+
+@theme inline {
+  --color-gold-50: var(--gold-50);
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-300: var(--gold-300);
+  --color-gold-400: var(--gold-400);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+
+  /* Kept as brand-* aliases so existing markup keeps working. */
+  --color-brand-50: var(--gold-50);
+  --color-brand-100: var(--gold-100);
+  --color-brand-200: var(--gold-200);
+  --color-brand-400: var(--gold-400);
+  --color-brand-500: var(--gold-500);
+  --color-brand-600: var(--gold-600);
+  --color-brand-700: var(--gold-700);
+  --color-brand-900: var(--ink-900);
+
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-300: var(--ink-300);
+  --color-ink-100: var(--ink-100);
+  --color-ink-50: var(--ink-50);
+
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-canvas: var(--canvas);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-display);
+}
+
+/*
+ * These defaults MUST live in @layer base.
+ *
+ * Unlayered CSS beats anything inside a cascade layer, whatever the
+ * specificity — so an unlayered `h1 { color: ink-900 }` silently overrides
+ * Tailwind's `.text-white` utility (which sits in the utilities layer) and
+ * every heading on a dark background renders near-black on near-black.
+ */
+@layer base {
+  /*
+   * Safety net against horizontal scroll. Decorative absolutely-positioned
+   * elements (the hero bloom, the rotating badge) can extend past the
+   * viewport on narrow screens; on a phone that turns into a page that
+   * drifts sideways when you scroll.
+   */
+  html {
+    overflow-x: hidden;
+  }
+
+  /* Long hostel names and URLs must wrap rather than widen the layout. */
+  h1,
+  h2,
+  h3,
+  p,
+  a {
+    overflow-wrap: break-word;
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink-800);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    /* cv11 clearer 'a'/'g'; ss01 disambiguates 1/l/I in prices. */
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.006em;
+  }
+
+  /* Headings carry the serif. Tight tracking — Playfair is drawn for display. */
+  h1,
+  h2,
+  h3,
+  .display {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--ink-900);
+  }
+
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 1.5px solid var(--gold-500);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /*
+   * Fluid type. clamp() scales continuously with the viewport instead of
+   * jumping at breakpoints, so a 320px phone, a 768px tablet and a 2560px
+   * monitor all get proportionate headings — and nothing overflows at the
+   * narrow end, which is what fixed `text-7xl` did on small phones.
+   *
+   * The middle term is vw-based with a rem floor so the text still responds
+   * to the reader's browser font-size setting rather than ignoring it.
+   */
+  .display-xl {
+    font-size: clamp(2.5rem, 1.6rem + 4.5vw, 5rem);
+    line-height: 1.04;
+  }
+
+  .display-lg {
+    font-size: clamp(2rem, 1.4rem + 3vw, 3.5rem);
+    line-height: 1.1;
+  }
+
+  .display-md {
+    font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+    line-height: 1.2;
+  }
+
+  /* Section padding that tightens on phones without a breakpoint pile-up. */
+  .section-y {
+    padding-block: clamp(3rem, 2rem + 5vw, 6rem);
+  }
+
+  /*
+   * Comfortable hit target on touch devices. 44px is the accessibility
+   * minimum; pointer:fine leaves mouse users the tighter desktop spacing.
+   */
+  @media (pointer: coarse) {
+    .tap {
+      min-height: 44px;
+    }
+  }
+
+  /*
+   * The letterspaced small-caps label above a heading. Used once per section;
+   * it is the device that makes the page read as a brochure rather than a
+   * dashboard.
+   */
+  .eyebrow {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
+
+  /*
+   * Colour via :where() so it carries zero specificity. These custom
+   * utilities are defined after Tailwind's in the same layer, so a plain
+   * `.eyebrow { color }` would beat `text-gold-300` on the same element —
+   * the default has to yield to any utility the markup sets.
+   */
+  :where(.eyebrow) {
+    color: var(--ink-500);
+  }
+
+  .card {
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Same reasoning: the error panel sets bg-amber-50 / border-amber-200. */
+  :where(.card) {
+    background: var(--surface);
+    border: 1px solid var(--ink-100);
+  }
+
+  .card-interactive {
+    transition:
+      box-shadow 400ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 400ms ease;
+  }
+
+  .card-interactive:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-4px);
+    border-color: var(--gold-200);
+  }
+
+  /* Offset white frame around a photo, as in the reference layout. */
+  .plate {
+    background: var(--surface);
+    padding: 0.875rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Faint tonal pattern for alternating sections — texture, not decoration. */
+  .paper {
+    background-color: var(--surface-alt);
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgb(20 17 14 / 0.035) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+  }
+
+  /*
+   * Two layers, because one gradient can't do both jobs: a flat wash lifts
+   * overall contrast so white text clears AA on a bright photo, and the
+   * vertical gradient darkens top and bottom where the nav and search bar sit.
+   * The hostel photography is busy — bunks, windows, daylight — so a light
+   * scrim leaves the wordmark competing with whatever is behind it.
+   */
+  .hero-scrim {
+    background:
+      linear-gradient(
+        180deg,
+        rgb(10 8 6 / 0.72) 0%,
+        rgb(10 8 6 / 0.52) 45%,
+        rgb(10 8 6 / 0.82) 100%
+      ),
+      rgb(14 11 9 / 0.35);
+  }
+
+  /* Warm dusk gradient — stands in for resort photography we don't license. */
+  .hero-dusk {
+    background:
+      radial-gradient(90% 60% at 72% 12%, rgb(197 165 95 / 0.42) 0%, transparent 62%),
+      radial-gradient(70% 55% at 18% 88%, rgb(117 92 46 / 0.38) 0%, transparent 60%),
+      linear-gradient(168deg, #2a2117 0%, #1b1712 48%, #100d0a 100%);
+  }
+
+  .rule {
+    display: block;
+    width: 2.5rem;
+    height: 1px;
+    background: var(--gold-400);
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, var(--ink-50) 25%, var(--ink-100) 37%, var(--ink-50) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-interactive,
+  .shimmer,
+  [class*="spin"] {
+    transition: none;
+    animation: none;
+  }
+  .card-interactive:hover {
+    transform: none;
+  }
+}
