@@ -13,7 +13,8 @@ function AuthForm() {
   const params = useSearchParams();
   const { signIn } = useSession();
   // Where to go after signing in — set by pages that bounced the student here.
-  const next = params.get("next") ?? "/bookings";
+  // Defaults to the explore/browse page.
+  const next = params.get("next") ?? "/";
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
