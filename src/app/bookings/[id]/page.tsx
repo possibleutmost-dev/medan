@@ -55,6 +55,16 @@ function BookingDetail({ id }: { id: string }) {
         if (!cancelled) setBooking(result);
       } catch (err) {
         if (!cancelled) {
+          // 403/404: this booking belongs to another account (a stale link,
+          // or a different student signed in on this device). Nothing here
+          // for them — send them to browse instead of a dead error page.
+          if (
+            err instanceof ApiError &&
+            (err.status === 403 || err.status === 404)
+          ) {
+            router.replace("/");
+            return;
+          }
           setError(
             err instanceof ApiError
               ? err.message
@@ -66,7 +76,7 @@ function BookingDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [token, id]);
+  }, [token, id, router]);
 
   async function cancel() {
     if (!token || !booking) return;
@@ -172,11 +182,7 @@ function BookingDetail({ id }: { id: string }) {
           </section>
 
           {booking.status === "pending" && (
-            <PayPanel
-              booking={booking}
-              token={token}
-              onPaid={(updated) => setBooking(updated)}
-            />
+            <PayPanel booking={booking} token={token} />
           )}
 
           {booking.status === "paymentHeld" && (

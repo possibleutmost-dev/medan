@@ -6,16 +6,8 @@ import { cedis, shortDate } from "@/lib/format";
 import type {
   BookingResponse,
   ManualPaymentInstructions,
-  PaymentChannel,
   PaymentResponse,
 } from "@/lib/types";
-
-const CHANNELS: { value: PaymentChannel; label: string; needsPhone: boolean }[] =
-  [
-    { value: "momoMtn", label: "MTN Mobile Money", needsPhone: true },
-    { value: "momoTelecel", label: "Telecel Cash", needsPhone: true },
-    { value: "card", label: "Card", needsPhone: false },
-  ];
 
 /** Screenshot constraints mirrored from the API (JPG/PNG/WEBP, 5 MB). */
 const PROOF_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -32,30 +24,24 @@ const FIELD =
   "w-full rounded-lg border border-ink-100 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 
 /**
- * Payment for a pending booking, two routes:
+ * Payment for a pending booking — manual MoMo transfer only.
  *
- *  - **Paystack** — charge in the app (MoMo prompt / OTP / card checkout).
- *  - **Manual MoMo** — the student sends to the platform wallet themselves and
- *    uploads the transfer screenshot. Nothing settles until staff review it,
- *    so after submission the panel shows a "we're confirming" state instead
- *    of the pay form; a rejection shows the staff note and lets them retry.
+ * The student sends Mobile Money to the platform wallet themselves and
+ * uploads the transfer screenshot. Nothing settles until staff review it,
+ * so after submission the panel shows a "we're confirming" state instead
+ * of the pay form; a rejection shows the staff note and lets them retry.
+ *
+ * (The in-app Paystack flow was removed on request — bring it back from
+ * git history once a live key is configured.)
  */
 export function PayPanel({
   booking,
   token,
-  onPaid,
 }: {
   booking: BookingResponse;
   token: string;
-  onPaid: (booking: BookingResponse) => void;
 }) {
-  const [method, setMethod] = useState<"paystack" | "manual">("paystack");
-  const [channel, setChannel] = useState<PaymentChannel>("momoMtn");
-  const [phone, setPhone] = useState("");
   const [payment, setPayment] = useState<PaymentResponse | null>(null);
-  const [otp, setOtp] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   // Distinguishes "you just submitted" from "this was already pending when
   // you opened the page", so the success note only shows once.
   const [justSubmitted, setJustSubmitted] = useState(false);
@@ -74,7 +60,6 @@ export function PayPanel({
           existing.status === "rejected"
         ) {
           setPayment(existing);
-          if (existing.status === "rejected") setMethod("manual");
         }
       } catch {
         // 404 — no payment yet. Anything else surfaces when they try to pay.
@@ -84,76 +69,6 @@ export function PayPanel({
       cancelled = true;
     };
   }, [token, booking.id]);
-
-  const needsPhone = CHANNELS.find((c) => c.value === channel)?.needsPhone;
-
-  async function refreshBooking() {
-    onPaid(await api.getBooking(token, booking.id));
-  }
-
-  async function start() {
-    const label =
-      CHANNELS.find((c) => c.value === channel)?.label ?? "this channel";
-    if (!confirm(`Pay ${cedis(booking.amount)} now via ${label}?`)) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await api.initializePayment(token, {
-        bookingId: booking.id,
-        channel,
-        phone: needsPhone ? phone.trim() || undefined : undefined,
-      });
-      setPayment(result);
-
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-        return;
-      }
-      // Simulation mode settles immediately; OTP charges wait for the code.
-      if (!result.requiresOtp) await verify(result.reference);
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't start the payment.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verify(reference: string) {
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await api.verifyPayment(token, reference);
-      setPayment(result);
-      if (result.bookingStatus === "paymentHeld") await refreshBooking();
-      else setError("Payment hasn't settled yet. Try verifying again shortly.");
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't verify the payment.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function sendOtp() {
-    if (!payment) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await api.submitOtp(token, payment.reference, otp.trim());
-      setPayment(result);
-      if (result.bookingStatus === "paymentHeld") await refreshBooking();
-      else await verify(result.reference);
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "That code wasn't accepted.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
 
   // Proof already with staff: no pay form, just where things stand.
   if (payment?.status === "pendingReview") {
@@ -206,129 +121,21 @@ export function PayPanel({
         </p>
       )}
 
-      {error && (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
-      )}
-
-      {payment?.requiresOtp ? (
-        <div className="mt-4 space-y-3">
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            {payment.displayText ??
-              "Approve the charge on your phone, then enter the code you were sent."}
-          </p>
-          <input
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="Enter the code"
-            inputMode="numeric"
-            className={FIELD}
-          />
-          <button
-            onClick={sendOtp}
-            disabled={busy || !otp.trim()}
-            className="tap w-full rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-          >
-            {busy ? "Submitting…" : "Submit code"}
-          </button>
-          <button
-            onClick={() => verify(payment.reference)}
-            disabled={busy}
-            className="w-full text-sm text-ink-500 hover:text-ink-900 hover:underline"
-          >
-            Already approved? Check payment status
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-ink-50 p-1 text-sm font-medium">
-            {(
-              [
-                ["paystack", "Pay in app"],
-                ["manual", "Send MoMo manually"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => {
-                  setMethod(value);
-                  setError(null);
-                }}
-                className={`rounded-lg px-3 py-2 ${
-                  method === value
-                    ? "bg-white text-brand-700 shadow-sm"
-                    : "text-ink-500 hover:text-ink-900"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {method === "paystack" ? (
-            <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {CHANNELS.map((c) => (
-                  <button
-                    key={c.value}
-                    onClick={() => setChannel(c.value)}
-                    className={`rounded-lg border px-3 py-2 text-sm font-medium ${
-                      channel === c.value
-                        ? "border-brand-600 bg-brand-50 text-brand-700"
-                        : "border-ink-100 text-ink-700 hover:bg-ink-50"
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-
-              {needsPhone && (
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Mobile Money number (e.g. 0241234567)"
-                  inputMode="tel"
-                  className={FIELD}
-                />
-              )}
-
-              <button
-                onClick={start}
-                disabled={busy}
-                className="tap w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-              >
-                {busy ? "Starting payment…" : `Pay ${cedis(booking.amount)}`}
-              </button>
-
-              {payment?.simulated && (
-                <p className="text-xs text-ink-500">
-                  Simulation mode — the API has no Paystack key configured, so
-                  no real money moved.
-                </p>
-              )}
-            </div>
-          ) : (
-            <ManualPayForm
-              booking={booking}
-              token={token}
-              onSubmitted={(p) => {
-                setPayment(p);
-                setJustSubmitted(true);
-              }}
-            />
-          )}
-        </>
-      )}
+      <ManualPayForm
+        booking={booking}
+        token={token}
+        onSubmitted={(p) => {
+          setPayment(p);
+          setJustSubmitted(true);
+        }}
+      />
     </section>
   );
 }
 
 /**
- * The manual route: show the platform wallet, collect the transfer screenshot
- * (plus the receipt's transaction ID and sender number), and park it for
- * staff review.
+ * Show the platform wallet, collect the transfer screenshot (plus the
+ * receipt's transaction ID and sender number), and park it for staff review.
  */
 function ManualPayForm({
   booking,
@@ -357,7 +164,7 @@ function ManualPayForm({
         if (!cancelled) setInfo(result);
       } catch (err) {
         if (!cancelled) {
-          // A 503 means the wallet isn't configured — steer back to in-app.
+          // A 503 means the wallet isn't configured server-side.
           setInfoError(
             err instanceof ApiError
               ? err.message
