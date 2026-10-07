@@ -53,6 +53,9 @@ export function PayPanel({
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Distinguishes "you just submitted" from "this was already pending when
+  // you opened the page", so the success note only shows once.
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   // A proof may already be with staff from an earlier visit — the booking is
   // still "pending" then, so the panel renders. Look the payment up rather
@@ -86,6 +89,9 @@ export function PayPanel({
   }
 
   async function start() {
+    const label =
+      CHANNELS.find((c) => c.value === channel)?.label ?? "this channel";
+    if (!confirm(`Pay ${cedis(booking.amount)} now via ${label}?`)) return;
     setBusy(true);
     setError(null);
     try {
@@ -150,6 +156,11 @@ export function PayPanel({
   if (payment?.status === "pendingReview") {
     return (
       <section className="mt-5 card p-5">
+        {justSubmitted && (
+          <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
+            ✓ Payment proof uploaded successfully.
+          </p>
+        )}
         <h2 className="font-semibold">We&apos;re confirming your transfer</h2>
         <p className="mt-1 text-sm text-ink-700">
           Your payment proof of {cedis(payment.amount)} is with our team. Your
@@ -299,7 +310,10 @@ export function PayPanel({
             <ManualPayForm
               booking={booking}
               token={token}
-              onSubmitted={setPayment}
+              onSubmitted={(p) => {
+                setPayment(p);
+                setJustSubmitted(true);
+              }}
             />
           )}
         </>
@@ -398,6 +412,12 @@ function ManualPayForm({
 
   async function submit() {
     if (!proof) return;
+    if (
+      !confirm(
+        `Submit this screenshot as proof of your ${cedis(info?.amount ?? booking.amount)} transfer? Our staff will review and confirm it.`,
+      )
+    )
+      return;
     setBusy(true);
     setError(null);
     try {

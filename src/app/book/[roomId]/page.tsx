@@ -59,7 +59,8 @@ export default function BookPage({
         roomId,
         academicYear: academicYear.trim(),
       });
-      router.push(`/bookings/${booking.id}`);
+      // `new=1` makes the booking page greet them with a success banner.
+      router.push(`/bookings/${booking.id}?new=1`);
     } catch (err) {
       setError(
         err instanceof ApiError

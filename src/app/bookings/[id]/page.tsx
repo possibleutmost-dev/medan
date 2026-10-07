@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, use, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -16,7 +16,21 @@ export default function BookingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  // useSearchParams needs a Suspense boundary in the app router.
+  return (
+    <Suspense
+      fallback={<p className="p-12 text-center text-ink-500">Loading…</p>}
+    >
+      <BookingDetail id={id} />
+    </Suspense>
+  );
+}
+
+function BookingDetail({ id }: { id: string }) {
   const router = useRouter();
+  const search = useSearchParams();
+  // Set by the reserve flow so the first thing seen is "it worked".
+  const justCreated = search.get("new") === "1";
   const { token, loading: sessionLoading } = useSession();
 
   const [booking, setBooking] = useState<BookingResponse | null>(null);
@@ -97,6 +111,13 @@ export default function BookingDetailPage({
         <p className="mt-6 text-ink-500">Loading…</p>
       ) : (
         <>
+          {justCreated && booking.status === "pending" && (
+            <p className="mt-4 rounded-lg bg-green-50 px-3 py-2.5 text-sm font-medium text-green-700">
+              🎉 Your bed is reserved! Complete the payment below to secure
+              it.
+            </p>
+          )}
+
           <header className="mt-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">

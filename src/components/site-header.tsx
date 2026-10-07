@@ -20,6 +20,14 @@ export function SiteHeader() {
   const overHero = pathname === "/";
   const [open, setOpen] = useState(false);
 
+  // One stray tap shouldn't end the session — confirm first.
+  function confirmSignOut() {
+    if (confirm("Sign out of your MeDan account?")) {
+      signOut();
+      setOpen(false);
+    }
+  }
+
   const link = `text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
     overHero ? "text-white/75 hover:text-gold-300" : "text-ink-700 hover:text-gold-600"
   }`;
@@ -69,7 +77,7 @@ export function SiteHeader() {
             {loading ? (
               <span className="h-4 w-20 shimmer" />
             ) : user ? (
-              <button onClick={signOut} className={link}>
+              <button onClick={confirmSignOut} className={link}>
                 Sign out
               </button>
             ) : (
@@ -109,7 +117,7 @@ export function SiteHeader() {
                 <Link href="/bookings" onClick={() => setOpen(false)} className={`${link} py-2`}>
                   My bookings
                 </Link>
-                <button onClick={signOut} className={`${link} py-2 text-left`}>
+                <button onClick={confirmSignOut} className={`${link} py-2 text-left`}>
                   Sign out
                 </button>
               </>
