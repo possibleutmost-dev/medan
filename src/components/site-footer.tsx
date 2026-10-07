@@ -72,7 +72,7 @@ export function SiteFooter() {
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} MeDan. All rights reserved.</p>
           <p className="text-white/40">
-            Payments processed by Paystack · Held in escrow until check-in
+            Pay by MoMo transfer · Held in escrow until check-in
           </p>
         </div>
       </div>

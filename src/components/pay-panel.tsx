@@ -21,6 +21,10 @@ const CHANNELS: { value: PaymentChannel; label: string; needsPhone: boolean }[] 
 const PROOF_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PROOF_MAX_BYTES = 5 * 1024 * 1024;
 
+/** Support group where students can also share their payment screenshot. */
+const WHATSAPP_GROUP_URL =
+  "https://chat.whatsapp.com/DyNYgfb4xFtKFKCV4gTgPP?mode=gi_t";
+
 const FIELD =
   "w-full rounded-lg border border-ink-100 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 
@@ -169,6 +173,7 @@ export function PayPanel({
             <dd>{shortDate(payment.submittedAt)}</dd>
           </div>
         </dl>
+        <WhatsAppJoin note="Questions about your payment? Our staff are in the group." />
       </section>
     );
   }
@@ -452,6 +457,8 @@ function ManualPayForm({
         )}
       </div>
 
+      <WhatsAppJoin note="After booking you can also share your screenshot there — our staff will approve it." />
+
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
@@ -532,6 +539,27 @@ function ManualPayForm({
         We confirm transfers within a few hours. Your bed stays held while we
         do.
       </p>
+    </div>
+  );
+}
+
+/** Link into the support WhatsApp group, with a line of context. */
+function WhatsAppJoin({ note }: { note: string }) {
+  return (
+    <div className="mt-4">
+      <a
+        href={WHATSAPP_GROUP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="tap flex items-center justify-center gap-2 rounded-lg border border-green-600/40 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-100"
+      >
+        {/* WhatsApp glyph, inline so no icon dependency is needed. */}
+        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden>
+          <path d="M12 2a10 10 0 0 0-8.65 15.02L2.2 21.1a.75.75 0 0 0 .93.93l4.1-1.14A10 10 0 1 0 12 2Zm0 1.8a8.2 8.2 0 1 1-4.24 15.22.9.9 0 0 0-.71-.09l-2.6.72.73-2.56a.9.9 0 0 0-.1-.72A8.2 8.2 0 0 1 12 3.8Zm-2.9 4.1c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.42 1.03 2.59.12.17 1.74 2.78 4.3 3.78 2.13.84 2.56.67 3.03.63.46-.04 1.5-.61 1.71-1.2.21-.6.21-1.1.15-1.21-.06-.1-.23-.17-.48-.29s-1.5-.74-1.73-.82c-.23-.08-.4-.13-.57.12-.17.25-.65.82-.8.99-.14.17-.29.19-.54.06a6.8 6.8 0 0 1-2-1.23 7.5 7.5 0 0 1-1.39-1.72c-.14-.25-.01-.39.11-.51.12-.12.26-.3.38-.44.13-.15.17-.25.25-.42.09-.17.05-.32-.02-.44-.06-.13-.55-1.37-.77-1.87-.2-.49-.4-.42-.56-.43h-.55Z" />
+        </svg>
+        Join our WhatsApp group
+      </a>
+      <p className="mt-1.5 text-center text-xs text-ink-500">{note}</p>
     </div>
   );
 }
