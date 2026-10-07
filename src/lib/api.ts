@@ -14,6 +14,7 @@ import type {
   HostelDetail,
   HostelQuery,
   HostelSummary,
+  ManualPaymentInstructions,
   PaymentChannel,
   PaymentResponse,
   RoommateResponse,
@@ -67,13 +68,17 @@ interface RequestOptions {
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, token, revalidate } = opts;
 
+  // FormData goes through untouched: the browser sets the multipart
+  // Content-Type (with its boundary) itself — setting it by hand breaks it.
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
-      ...(body ? { "Content-Type": "application/json" } : {}),
+      ...(body && !isForm ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: isForm ? body : body ? JSON.stringify(body) : undefined,
     ...(revalidate !== undefined
       ? { next: { revalidate } }
       : { cache: "no-store" as RequestCache }),
@@ -219,4 +224,39 @@ export const api = {
 
   paymentForBooking: (token: string, bookingId: string) =>
     request<PaymentResponse>(`/api/payments/booking/${bookingId}`, { token }),
+
+  // ----- Manual MoMo transfer (student pays the platform wallet by hand) ---
+  /** The wallet to send to and how much, for the "pay by MoMo" panel. */
+  manualPaymentInstructions: (token: string, bookingId: string) =>
+    request<ManualPaymentInstructions>(
+      `/api/payments/manual/instructions?bookingId=${encodeURIComponent(bookingId)}`,
+      { token },
+    ),
+
+  /**
+   * Records a transfer the student already made, with the screenshot as
+   * evidence. The booking stays pending until staff approve it.
+   */
+  submitManualPayment: (
+    token: string,
+    input: {
+      bookingId: string;
+      proof: File;
+      transactionId?: string;
+      senderPhone?: string;
+      senderName?: string;
+    },
+  ) => {
+    const form = new FormData();
+    form.set("bookingId", input.bookingId);
+    form.set("proof", input.proof);
+    if (input.transactionId) form.set("transactionId", input.transactionId);
+    if (input.senderPhone) form.set("senderPhone", input.senderPhone);
+    if (input.senderName) form.set("senderName", input.senderName);
+    return request<PaymentResponse>("/api/payments/manual/submit", {
+      method: "POST",
+      body: form,
+      token,
+    });
+  },
 };

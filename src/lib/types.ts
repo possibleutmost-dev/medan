@@ -41,7 +41,7 @@ export type BookingStatus =
   | "refunded"
   | "cancelled";
 
-export type PaymentChannel = "momoMtn" | "momoTelecel" | "card";
+export type PaymentChannel = "momoMtn" | "momoTelecel" | "card" | "manualMomo";
 
 export interface HostelSummary {
   id: string;
@@ -145,6 +145,35 @@ export interface PaymentResponse {
    */
   requiresOtp: boolean;
   displayText: string | null;
+
+  // ----- Manual MoMo transfers (null for Paystack payments) -----
+  /**
+   * Authorized endpoint for the uploaded screenshot, e.g.
+   * "/api/payments/medan_m_xxx/proof". Needs the bearer token — not a
+   * public image URL.
+   */
+  proofUrl: string | null;
+  senderPhone: string | null;
+  senderName: string | null;
+  providerTransactionId: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  /** Why staff rejected the proof, when they did. */
+  reviewNote: string | null;
+}
+
+/** GET /api/payments/manual/instructions — where to send a manual transfer. */
+export interface ManualPaymentInstructions {
+  enabled: boolean;
+  /** e.g. "0559960788" */
+  walletNumber: string;
+  /** e.g. "CY TECHNOLOGIES AND CONSULTING" */
+  walletName: string;
+  /** e.g. "MoMo wallet" */
+  walletType: string;
+  instructions: string | null;
+  /** What this booking costs, GH₵. */
+  amount: number;
 }
 
 export type UserRole = "student" | "owner" | "worker" | "manager" | "admin";
