@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { cedis, shortDate } from "@/lib/format";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PayPanel } from "@/components/pay-panel";
 import type { BookingResponse } from "@/lib/types";
 
@@ -36,6 +37,7 @@ function BookingDetail({ id }: { id: string }) {
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   useEffect(() => {
     if (!sessionLoading && !token) {
@@ -80,12 +82,6 @@ function BookingDetail({ id }: { id: string }) {
 
   async function cancel() {
     if (!token || !booking) return;
-    if (
-      !confirm(
-        "Cancel this booking and release the bed? This can't be undone.",
-      )
-    )
-      return;
     setCancelling(true);
     try {
       setBooking(await api.cancelBooking(token, booking.id));
@@ -196,7 +192,7 @@ function BookingDetail({ id }: { id: string }) {
           {(booking.status === "pending" ||
             booking.status === "paymentHeld") && (
             <button
-              onClick={cancel}
+              onClick={() => setConfirmingCancel(true)}
               disabled={cancelling}
               className="mt-5 w-full rounded-lg border border-ink-300 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50 disabled:opacity-60"
             >
@@ -205,6 +201,20 @@ function BookingDetail({ id }: { id: string }) {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmingCancel}
+        title="Cancel this booking?"
+        message="Your bed will be released for someone else to take. This can't be undone."
+        confirmLabel="Cancel booking"
+        cancelLabel="Keep my bed"
+        danger
+        onConfirm={() => {
+          setConfirmingCancel(false);
+          void cancel();
+        }}
+        onClose={() => setConfirmingCancel(false)}
+      />
     </div>
   );
 }

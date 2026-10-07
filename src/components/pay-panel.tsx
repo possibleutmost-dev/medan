@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { cedis, shortDate } from "@/lib/format";
+import { ConfirmDialog } from "./confirm-dialog";
 import type {
   BookingResponse,
   ManualPaymentInstructions,
@@ -155,6 +156,7 @@ function ManualPayForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [confirmingSubmit, setConfirmingSubmit] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,12 +224,6 @@ function ManualPayForm({
 
   async function submit() {
     if (!proof) return;
-    if (
-      !confirm(
-        `Submit this screenshot as proof of your ${cedis(info?.amount ?? booking.amount)} transfer? Our staff will review and confirm it.`,
-      )
-    )
-      return;
     setBusy(true);
     setError(null);
     try {
@@ -359,7 +355,7 @@ function ManualPayForm({
       </div>
 
       <button
-        onClick={submit}
+        onClick={() => setConfirmingSubmit(true)}
         disabled={busy || !proof}
         className="tap w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
       >
@@ -369,6 +365,19 @@ function ManualPayForm({
         We confirm transfers within a few hours. Your bed stays held while we
         do.
       </p>
+
+      <ConfirmDialog
+        open={confirmingSubmit}
+        title="Submit payment proof?"
+        message={`We'll send your screenshot to our team as proof of your ${cedis(info.amount)} transfer. They'll review and confirm it shortly.`}
+        confirmLabel="Submit proof"
+        cancelLabel="Not yet"
+        onConfirm={() => {
+          setConfirmingSubmit(false);
+          void submit();
+        }}
+        onClose={() => setConfirmingSubmit(false)}
+      />
     </div>
   );
 }

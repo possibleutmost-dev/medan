@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/lib/session";
+import { ConfirmDialog } from "./confirm-dialog";
 
 /**
  * Centred wordmark with navigation split either side of it — the hotel-site
@@ -19,13 +20,11 @@ export function SiteHeader() {
   const pathname = usePathname();
   const overHero = pathname === "/";
   const [open, setOpen] = useState(false);
-
   // One stray tap shouldn't end the session — confirm first.
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+
   function confirmSignOut() {
-    if (confirm("Sign out of your MeDan account?")) {
-      signOut();
-      setOpen(false);
-    }
+    setConfirmingSignOut(true);
   }
 
   const link = `text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
@@ -129,6 +128,20 @@ export function SiteHeader() {
           </nav>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmingSignOut}
+        title="Sign out?"
+        message="You can sign back in any time to see your bookings."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        onConfirm={() => {
+          signOut();
+          setConfirmingSignOut(false);
+          setOpen(false);
+        }}
+        onClose={() => setConfirmingSignOut(false)}
+      />
     </header>
   );
 }
