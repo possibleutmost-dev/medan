@@ -49,6 +49,29 @@ export function SiteFooter() {
               Student accommodation for Ghanaian campuses. Your payment is held
               in escrow and released to the hostel only after you check in.
             </p>
+            <p className="mt-4 text-sm">
+              Need help with anything? Call{" "}
+              <a
+                href="tel:0533688612"
+                className="font-semibold text-gold-300 hover:text-gold-200"
+              >
+                0533688612
+              </a>
+              {", "}
+              <a
+                href="tel:0557732115"
+                className="font-semibold text-gold-300 hover:text-gold-200"
+              >
+                0557732115
+              </a>{" "}
+              or{" "}
+              <a
+                href="tel:0552859150"
+                className="font-semibold text-gold-300 hover:text-gold-200"
+              >
+                0552859150
+              </a>
+            </p>
           </div>
 
           {columns.map((col) => (

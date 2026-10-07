@@ -25,6 +25,9 @@ const PROOF_MAX_BYTES = 5 * 1024 * 1024;
 const WHATSAPP_GROUP_URL =
   "https://chat.whatsapp.com/DyNYgfb4xFtKFKCV4gTgPP?mode=gi_t";
 
+/** Support lines for anything that goes wrong along the way. */
+const SUPPORT_PHONES = ["0533688612", "0557732115", "0552859150"];
+
 const FIELD =
   "w-full rounded-lg border border-ink-100 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 
@@ -580,6 +583,20 @@ function WhatsAppJoin({ note }: { note: string }) {
         Join our WhatsApp group
       </a>
       <p className="mt-1.5 text-center text-xs text-ink-500">{note}</p>
+      <p className="mt-1 text-center text-xs text-ink-500">
+        Or call us if anything comes up:{" "}
+        {SUPPORT_PHONES.map((phone, i) => (
+          <span key={phone}>
+            {i > 0 && " · "}
+            <a
+              href={`tel:${phone}`}
+              className="font-semibold text-brand-700 hover:underline"
+            >
+              {phone}
+            </a>
+          </span>
+        ))}
+      </p>
     </div>
   );
 }
