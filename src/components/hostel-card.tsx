@@ -4,6 +4,7 @@ import { PROPERTY_TYPE_LABELS, type HostelSummary } from "@/lib/types";
 import { AmenityList } from "./amenity-list";
 import { cedis } from "@/lib/format";
 import { Icon } from "./graphics";
+import { SafeImage } from "./safe-image";
 import { stockRoomImage } from "@/lib/stock";
 
 export function HostelCard({ hostel }: { hostel: HostelSummary }) {
@@ -15,11 +16,9 @@ export function HostelCard({ hostel }: { hostel: HostelSummary }) {
       className="card card-interactive group flex flex-col overflow-hidden"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        {/* Plain <img>: photos come from the API origin and arbitrary
-            CDNs, which next/image would need every domain configured for. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SafeImage
           src={cover}
+          fallback={stockRoomImage(hostel.id)}
           alt={hostel.name}
           loading="lazy"
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cedis } from "@/lib/format";
 import { ROOM_TYPE_LABELS, type RoomSummary } from "@/lib/types";
+import { SafeImage } from "./safe-image";
 import { stockRoomImage } from "@/lib/stock";
 import { photoUrl } from "@/lib/api";
 
@@ -121,9 +122,9 @@ export function RoomList({
 
             {/* Imagery */}
             <div className={`aspect-[4/3] overflow-hidden ${flipped ? "md:order-first lg:order-1" : ""}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SafeImage
                 src={image}
+                fallback={stockRoomImage(room.id)}
                 alt={room.label}
                 loading="lazy"
                 className="h-full w-full object-cover"

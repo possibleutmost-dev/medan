@@ -5,6 +5,7 @@ import { cedis } from "@/lib/format";
 import { humanAmenity } from "@/components/amenity-list";
 import { RoomList } from "@/components/room-list";
 import { Icon, SectionHeading } from "@/components/graphics";
+import { SafeImage } from "@/components/safe-image";
 import { PROPERTY_TYPE_LABELS } from "@/lib/types";
 import { HERO_IMAGE, stockRoomImage } from "@/lib/stock";
 
@@ -37,9 +38,9 @@ export default async function HostelPage({
       <section className="relative isolate">
         {hero ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SafeImage
               src={hero}
+              fallback={HERO_IMAGE}
               alt=""
               className="absolute inset-0 -z-10 h-full w-full object-cover"
             />
@@ -81,9 +82,9 @@ export default async function HostelPage({
         <section className="grid items-center gap-10 lg:grid-cols-2">
           <div className="plate">
             <div className="aspect-[4/5] overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SafeImage
                 src={plate}
+                fallback={stockRoomImage(hostel.id)}
                 alt={hostel.name}
                 className="h-full w-full object-cover"
               />
