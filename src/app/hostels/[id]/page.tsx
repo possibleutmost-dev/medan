@@ -151,6 +151,23 @@ export default async function HostelPage({
               : "Nothing free at the moment — check back before the semester starts."}
           </SectionHeading>
 
+          {/* Occupancy on the ground can move faster than the listing. */}
+          <div className="mx-auto mt-8 max-w-xl border border-gold-200 bg-gold-50 px-5 py-4 text-center">
+            <p className="text-sm font-semibold text-ink-900">
+              Please call before you book
+            </p>
+            <p className="mt-1 text-sm text-ink-700">
+              Phone {hostel.contactPhone ? "the hostel" : "us"} first to confirm
+              the bed you want is still available.
+            </p>
+            <a
+              href={`tel:${hostel.contactPhone || "0533688612"}`}
+              className="mt-2 inline-block text-sm font-semibold text-gold-600 hover:text-gold-700"
+            >
+              {hostel.contactPhone || "0533688612"}
+            </a>
+          </div>
+
           <div className="mt-14">
             <RoomList
               rooms={hostel.rooms}

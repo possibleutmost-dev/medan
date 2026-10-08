@@ -88,6 +88,22 @@ export default function BookPage({
 
       <h1 className="mt-4 text-2xl font-bold tracking-tight">Reserve a bed</h1>
 
+      {/* Occupancy on the ground can move faster than the listing. */}
+      <div className="mt-5 rounded-xl border border-gold-200 bg-gold-50 p-4 text-sm">
+        <p className="font-semibold text-ink-900">Please call before you book</p>
+        <p className="mt-1 text-ink-700">
+          Confirm the bed is still available by phoning{" "}
+          {hostel?.contactPhone ? "the hostel" : "us"} on{" "}
+          <a
+            href={`tel:${hostel?.contactPhone || "0533688612"}`}
+            className="font-semibold text-gold-600 hover:text-gold-700"
+          >
+            {hostel?.contactPhone || "0533688612"}
+          </a>{" "}
+          before you pay.
+        </p>
+      </div>
+
       <div className="mt-5 card p-5">
         {room ? (
           <dl className="space-y-3 text-sm">
