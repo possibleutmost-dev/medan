@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "./graphics";
 import { SafeImage } from "./safe-image";
-import { HERO_IMAGE } from "@/lib/stock";
 
 /**
  * Full-bleed hero with the search built into it.
@@ -44,18 +43,18 @@ export function HeroSearch({
 
   return (
     <section className="relative isolate overflow-hidden">
-      {backgroundImage ? (
+      {/* Dusk gradient always underneath: the no-photo design, and what a
+          photo that fails to load degrades to. */}
+      <div className="hero-dusk absolute inset-0 -z-10" />
+      {backgroundImage && (
         <>
           <SafeImage
             src={backgroundImage}
-            fallback={HERO_IMAGE}
             alt=""
             className="absolute inset-0 -z-10 h-full w-full object-cover"
           />
           <div className="hero-scrim absolute inset-0 -z-10" />
         </>
-      ) : (
-        <div className="hero-dusk absolute inset-0 -z-10" />
       )}
 
       <div className="mx-auto max-w-6xl px-4 pb-12 pt-24 text-center sm:pb-20 sm:pt-36">

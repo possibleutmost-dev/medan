@@ -14,6 +14,7 @@ const AMENITY_LABELS: Record<string, string> = {
   kitchen: "Kitchen",
   laundry: "Laundry",
   studyRoom: "Study room",
+  study: "Study room",
   tv: "TV",
   ensuite: "En-suite bathroom",
 };
@@ -29,6 +30,7 @@ const AMENITY_ICONS: Record<string, string> = {
   kitchen: "🍳",
   laundry: "🧺",
   studyRoom: "📚",
+  study: "📚",
   tv: "📺",
   ensuite: "🛁",
 };

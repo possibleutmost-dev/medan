@@ -5,9 +5,8 @@ import { cedis } from "@/lib/format";
 import { humanAmenity } from "@/components/amenity-list";
 import { RoomList } from "@/components/room-list";
 import { Icon, SectionHeading } from "@/components/graphics";
-import { SafeImage } from "@/components/safe-image";
+import { ListingPhoto, SafeImage } from "@/components/safe-image";
 import { PROPERTY_TYPE_LABELS } from "@/lib/types";
-import { HERO_IMAGE, stockRoomImage } from "@/lib/stock";
 
 export default async function HostelPage({
   params,
@@ -25,9 +24,11 @@ export default async function HostelPage({
   }
 
   const photos = hostel.photos.map(photoUrl).filter(Boolean) as string[];
-  // Real photo first, committed stock second — never a grey box.
-  const hero = photos[0] ?? HERO_IMAGE;
-  const plate = photos[1] ?? stockRoomImage(hostel.id);
+  // Only the property's own photos are shown — a listing without any gets the
+  // designed dusk banner and the generated building graphic, never a stock
+  // photo of somewhere else.
+  const hero = photos[0];
+  const plate = photos[1] ?? photos[0];
   const available = hostel.rooms.filter(
     (r) => r.status === "available" && r.availableBeds > 0,
   );
@@ -36,18 +37,18 @@ export default async function HostelPage({
     <>
       {/* Banner: the listing's own photo when there is one, dusk when not. */}
       <section className="relative isolate">
-        {hero ? (
+        {/* Dusk gradient always underneath: it is the no-photo design and the
+            backdrop a photo that fails to load degrades to. */}
+        <div className="hero-dusk absolute inset-0 -z-10" />
+        {hero && (
           <>
             <SafeImage
               src={hero}
-              fallback={HERO_IMAGE}
               alt=""
               className="absolute inset-0 -z-10 h-full w-full object-cover"
             />
             <div className="hero-scrim absolute inset-0 -z-10" />
           </>
-        ) : (
-          <div className="hero-dusk absolute inset-0 -z-10" />
         )}
 
         <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:py-28">
@@ -82,9 +83,9 @@ export default async function HostelPage({
         <section className="grid items-center gap-10 lg:grid-cols-2">
           <div className="plate">
             <div className="aspect-[4/5] overflow-hidden">
-              <SafeImage
+              <ListingPhoto
                 src={plate}
-                fallback={stockRoomImage(hostel.id)}
+                seed={hostel.id}
                 alt={hostel.name}
                 className="h-full w-full object-cover"
               />

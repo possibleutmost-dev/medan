@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { api, ApiError, photoUrl } from "@/lib/api";
-import { HERO_IMAGE } from "@/lib/stock";
 import type { HostelQuery, HostelSummary } from "@/lib/types";
 import { HostelCard } from "@/components/hostel-card";
 import { HeroSearch } from "@/components/hero-search";
@@ -63,10 +62,9 @@ export default async function BrowsePage({
   }
 
   const hasFilters = Object.values(query).some((v) => v !== undefined);
-  // Use a real listing photo behind the hero when the catalogue has one.
-  // A real listing photo wins; otherwise the committed stock hero.
-  const heroImage =
-    photoUrl(hostels.find((h) => h.photos[0])?.photos[0]) ?? HERO_IMAGE;
+  // A real listing photo behind the hero when the catalogue has one;
+  // otherwise HeroSearch shows its designed dusk gradient.
+  const heroImage = photoUrl(hostels.find((h) => h.photos[0])?.photos[0]);
 
   return (
     <>

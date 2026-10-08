@@ -7,8 +7,7 @@ import { api, ApiError, photoUrl } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { cedis, shortDate } from "@/lib/format";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
-import { SafeImage } from "@/components/safe-image";
-import { stockRoomImage } from "@/lib/stock";
+import { ListingPhoto } from "@/components/safe-image";
 import type { BookingResponse } from "@/lib/types";
 
 export default function BookingsPage() {
@@ -75,9 +74,9 @@ export default function BookingsPage() {
                 className="flex gap-4 card p-4 transition hover:border-brand-200 hover:shadow"
               >
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-ink-50 sm:h-20 sm:w-20">
-                  <SafeImage
-                    src={cover ?? stockRoomImage(b.hostelId)}
-                    fallback={stockRoomImage(b.hostelId)}
+                  <ListingPhoto
+                    src={cover}
+                    seed={b.hostelId}
                     alt=""
                     className="h-full w-full object-cover"
                   />

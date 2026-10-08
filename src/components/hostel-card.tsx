@@ -4,11 +4,10 @@ import { PROPERTY_TYPE_LABELS, type HostelSummary } from "@/lib/types";
 import { AmenityList } from "./amenity-list";
 import { cedis } from "@/lib/format";
 import { Icon } from "./graphics";
-import { SafeImage } from "./safe-image";
-import { stockRoomImage } from "@/lib/stock";
+import { ListingPhoto } from "./safe-image";
 
 export function HostelCard({ hostel }: { hostel: HostelSummary }) {
-  const cover = photoUrl(hostel.photos[0]) ?? stockRoomImage(hostel.id);
+  const cover = photoUrl(hostel.photos[0]);
 
   return (
     <Link
@@ -16,9 +15,9 @@ export function HostelCard({ hostel }: { hostel: HostelSummary }) {
       className="card card-interactive group flex flex-col overflow-hidden"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        <SafeImage
+        <ListingPhoto
           src={cover}
-          fallback={stockRoomImage(hostel.id)}
+          seed={hostel.id}
           alt={hostel.name}
           loading="lazy"
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { cedis } from "@/lib/format";
 import { ROOM_TYPE_LABELS, type RoomSummary } from "@/lib/types";
-import { SafeImage } from "./safe-image";
-import { stockRoomImage } from "@/lib/stock";
+import { ListingPhoto } from "./safe-image";
 import { photoUrl } from "@/lib/api";
 
 const GENDER_LABELS: Record<string, string> = {
@@ -43,9 +42,7 @@ export function RoomList({
         // is the manager's flag, availableBeds is the live count. Both gate it.
         const bookable = room.status === "available" && room.availableBeds > 0;
         const flipped = index % 2 === 1;
-        const image =
-          photoUrl(photos[index % Math.max(photos.length, 1)]) ??
-          stockRoomImage(room.id);
+        const image = photoUrl(photos[index % Math.max(photos.length, 1)]);
 
         return (
           <article
@@ -122,9 +119,9 @@ export function RoomList({
 
             {/* Imagery */}
             <div className={`aspect-[4/3] overflow-hidden ${flipped ? "md:order-first lg:order-1" : ""}`}>
-              <SafeImage
+              <ListingPhoto
                 src={image}
-                fallback={stockRoomImage(room.id)}
+                seed={room.id}
                 alt={room.label}
                 loading="lazy"
                 className="h-full w-full object-cover"
