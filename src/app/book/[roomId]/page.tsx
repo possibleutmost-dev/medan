@@ -92,13 +92,12 @@ export default function BookPage({
       <div className="mt-5 rounded-xl border border-gold-200 bg-gold-50 p-4 text-sm">
         <p className="font-semibold text-ink-900">Please call before you book</p>
         <p className="mt-1 text-ink-700">
-          Confirm the bed is still available by phoning{" "}
-          {hostel?.contactPhone ? "the hostel" : "us"} on{" "}
+          Confirm the bed is still available by phoning us on{" "}
           <a
-            href={`tel:${hostel?.contactPhone || "0533688612"}`}
+            href="tel:0533688612"
             className="font-semibold text-gold-600 hover:text-gold-700"
           >
-            {hostel?.contactPhone || "0533688612"}
+            0533688612
           </a>{" "}
           before you pay.
         </p>

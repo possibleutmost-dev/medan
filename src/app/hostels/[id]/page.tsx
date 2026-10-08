@@ -157,14 +157,13 @@ export default async function HostelPage({
               Please call before you book
             </p>
             <p className="mt-1 text-sm text-ink-700">
-              Phone {hostel.contactPhone ? "the hostel" : "us"} first to confirm
-              the bed you want is still available.
+              Phone us first to confirm the bed you want is still available.
             </p>
             <a
-              href={`tel:${hostel.contactPhone || "0533688612"}`}
+              href="tel:0533688612"
               className="mt-2 inline-block text-sm font-semibold text-gold-600 hover:text-gold-700"
             >
-              {hostel.contactPhone || "0533688612"}
+              0533688612
             </a>
           </div>
 
