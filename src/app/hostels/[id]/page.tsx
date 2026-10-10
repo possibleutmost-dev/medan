@@ -32,6 +32,8 @@ export default async function HostelPage({
   const available = hostel.rooms.filter(
     (r) => r.status === "available" && r.availableBeds > 0,
   );
+  // Unset coordinates arrive as 0,0 (the Gulf of Guinea) — only map real ones.
+  const hasCoords = hostel.lat !== 0 || hostel.lng !== 0;
 
   return (
     <>
@@ -126,6 +128,37 @@ export default async function HostelPage({
             )}
           </div>
         </section>
+
+        {hasCoords && (
+          <section className="mt-16 sm:mt-20">
+            <SectionHeading eyebrow="Location" title="Find us on the map" align="center">
+              {hostel.address} · {hostel.campus} campus
+            </SectionHeading>
+
+            {/* Keyless Google Maps embed; opens the Maps app via the link below. */}
+            <div className="plate mt-10">
+              <iframe
+                title={`Map showing ${hostel.name}`}
+                src={`https://maps.google.com/maps?q=${hostel.lat},${hostel.lng}&z=16&output=embed`}
+                className="h-72 w-full border-0 sm:h-96"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+
+            <p className="mt-6 text-center">
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${hostel.lat},${hostel.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-900 hover:text-gold-600"
+              >
+                Get directions
+                <span className="transition group-hover:translate-x-1">→</span>
+              </a>
+            </p>
+          </section>
+        )}
 
         {hostel.amenities.length > 0 && (
           <section className="paper mt-16 px-5 py-12 sm:mt-20 sm:px-12 sm:py-14">
