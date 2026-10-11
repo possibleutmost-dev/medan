@@ -6,7 +6,17 @@ import { humanAmenity } from "@/components/amenity-list";
 import { RoomList } from "@/components/room-list";
 import { Icon, SectionHeading } from "@/components/graphics";
 import { ListingPhoto, SafeImage } from "@/components/safe-image";
-import { PROPERTY_TYPE_LABELS } from "@/lib/types";
+import {
+  PROPERTY_TYPE_LABELS,
+  ROOM_TYPE_LABELS,
+  type AvailabilityGroup,
+} from "@/lib/types";
+
+const GENDER_SHORT: Record<string, string> = {
+  male: "men",
+  female: "women",
+  mixed: "mixed",
+};
 
 export default async function HostelPage({
   params,
@@ -21,6 +31,15 @@ export default async function HostelPage({
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
+  }
+
+  // Free beds grouped by room kind and gender. Decoration, not structure —
+  // if the call fails the page still renders, just without the summary.
+  let groups: AvailabilityGroup[] = [];
+  try {
+    groups = await api.getRoomAvailability(id);
+  } catch {
+    // Room rows below still carry every number.
   }
 
   const photos = hostel.photos.map(photoUrl).filter(Boolean) as string[];
@@ -183,6 +202,29 @@ export default async function HostelPage({
               ? `${available.length} of ${hostel.rooms.length} rooms have beds free.`
               : "Nothing free at the moment — check back before the semester starts."}
           </SectionHeading>
+
+          {/* What's free at a glance: by how many share, and who it's for. */}
+          {groups.length > 0 && (
+            <div className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-3">
+              {groups.map((g) => (
+                <div
+                  key={`${g.type}-${g.gender}`}
+                  className="border border-ink-100 bg-surface px-5 py-3 text-center"
+                >
+                  <p className="text-sm font-semibold text-ink-900">
+                    {ROOM_TYPE_LABELS[g.type] ?? g.type} ·{" "}
+                    {GENDER_SHORT[g.gender] ?? g.gender}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    {g.freeBeds > 0
+                      ? `${g.freeBeds} bed${g.freeBeds === 1 ? "" : "s"} free`
+                      : "Full"}
+                    {g.fromPrice !== null && ` · from ${cedis(g.fromPrice)}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Occupancy on the ground can move faster than the listing. */}
           <div className="mx-auto mt-8 max-w-xl border border-gold-200 bg-gold-50 px-5 py-4 text-center">

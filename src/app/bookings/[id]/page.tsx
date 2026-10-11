@@ -27,6 +27,46 @@ export default function BookingDetailPage({
   );
 }
 
+/**
+ * Counts down an unpaid hold. Seeded from the API's secondsLeft rather than
+ * computed from expiresAt, so a phone with a wrong clock still shows the
+ * right figure.
+ */
+function HoldCountdown({ seconds }: { seconds: number }) {
+  const [left, setLeft] = useState(seconds);
+
+  useEffect(() => {
+    const timer = setInterval(
+      () => setLeft((s) => (s > 0 ? s - 1 : 0)),
+      1000,
+    );
+    return () => clearInterval(timer);
+  }, []);
+
+  if (left <= 0) {
+    return (
+      <p className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        Your hold has run out, so the bed may have been released to another
+        student. Refresh to check — if the booking was cancelled, you can
+        reserve again from the hostel page.
+      </p>
+    );
+  }
+
+  const m = Math.floor(left / 60);
+  const s = String(left % 60).padStart(2, "0");
+  return (
+    <p className="mt-5 rounded-xl border border-gold-200 bg-gold-50 p-4 text-sm text-ink-700">
+      ⏳ This bed is held for you for{" "}
+      <span className="font-mono font-bold text-ink-900">
+        {m}:{s}
+      </span>{" "}
+      — complete the payment before the timer runs out or it goes back on the
+      market.
+    </p>
+  );
+}
+
 function BookingDetail({ id }: { id: string }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -176,6 +216,10 @@ function BookingDetail({ id }: { id: string }) {
               </div>
             )}
           </section>
+
+          {booking.status === "pending" && booking.secondsLeft !== null && (
+            <HoldCountdown seconds={booking.secondsLeft} />
+          )}
 
           {booking.status === "pending" && (
             <PayPanel booking={booking} token={token} />

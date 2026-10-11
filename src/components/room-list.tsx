@@ -42,7 +42,11 @@ export function RoomList({
         // is the manager's flag, availableBeds is the live count. Both gate it.
         const bookable = room.status === "available" && room.availableBeds > 0;
         const flipped = index % 2 === 1;
-        const image = photoUrl(photos[index % Math.max(photos.length, 1)]);
+        // The room's own cover photo wins; a room without one borrows from
+        // the hostel gallery so the row isn't bare.
+        const image =
+          photoUrl(room.photos?.[0]) ??
+          photoUrl(photos[index % Math.max(photos.length, 1)]);
 
         return (
           <article

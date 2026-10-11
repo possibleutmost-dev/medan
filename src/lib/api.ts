@@ -10,6 +10,7 @@
 
 import type {
   AuthResult,
+  AvailabilityGroup,
   BookingResponse,
   HostelDetail,
   HostelQuery,
@@ -122,6 +123,13 @@ export const api = {
 
   getHostel: (id: string) =>
     request<HostelDetail>(`/api/hostels/${id}`, { revalidate: 60 }),
+
+  /** Free beds grouped by room type and gender; maintenance rooms excluded. */
+  getRoomAvailability: (hostelId: string) =>
+    request<AvailabilityGroup[]>(
+      `/api/hostels/${hostelId}/rooms/availability`,
+      { revalidate: 60 },
+    ),
 
   // ----- Auth ---------------------------------------------------------
   register: (body: {

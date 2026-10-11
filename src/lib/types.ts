@@ -78,6 +78,23 @@ export interface RoomSummary {
   capacity: number;
   availableBeds: number;
   gender: Gender;
+  /** This room's own images, cover first. Empty → show the hostel's gallery. */
+  photos: string[];
+}
+
+/**
+ * Free beds grouped the way a student chooses: how many share the room, and
+ * who it is for. From GET /api/hostels/{id}/rooms/availability.
+ */
+export interface AvailabilityGroup {
+  type: RoomType;
+  capacity: number;
+  gender: Gender;
+  roomsWithSpace: number;
+  freeBeds: number;
+  totalRooms: number;
+  /** Cheapest price among the rooms with space, GH₵. Null if none free. */
+  fromPrice: number | null;
 }
 
 export interface PhotoResponse {
@@ -107,6 +124,13 @@ export interface BookingResponse {
   paystackReference: string | null;
   disputeReason: string | null;
   disputeResolution: string | null;
+  /** When an unpaid hold runs out, or null once paid. */
+  expiresAt: string | null;
+  /**
+   * Whole seconds left on the hold, or null when nothing is counting down.
+   * Trust this over computing from expiresAt — the device clock may be wrong.
+   */
+  secondsLeft: number | null;
   createdAt: string;
   paidAt: string | null;
   checkedInAt: string | null;
