@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { cedis, shortDate } from "@/lib/format";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -10,9 +10,13 @@ import type {
   PaymentResponse,
 } from "@/lib/types";
 
-/** Screenshot constraints mirrored from the API (JPG/PNG/WEBP, 5 MB). */
-const PROOF_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const PROOF_MAX_BYTES = 5 * 1024 * 1024;
+/** Proof constraints mirrored from the API: up to 3 files, images ≤5 MB,
+    screen recordings ≤25 MB. */
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm", "video/3gpp"];
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
+const MAX_PROOFS = 3;
 
 /** Support group where students can also share their payment screenshot. */
 const WHATSAPP_GROUP_URL =
@@ -149,8 +153,10 @@ function ManualPayForm({
 }) {
   const [info, setInfo] = useState<ManualPaymentInstructions | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
-  const [proof, setProof] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  // Each proof keeps its preview object URL alongside (null for videos).
+  const [proofs, setProofs] = useState<{ file: File; url: string | null }[]>(
+    [],
+  );
   const [transactionId, setTransactionId] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -180,35 +186,55 @@ function ManualPayForm({
     };
   }, [token, booking.id]);
 
-  // Object URLs leak until revoked: release each one when it is replaced,
-  // and the last one on unmount.
+  // Object URLs leak until revoked: release removed ones immediately and
+  // whatever is left on unmount (via a ref, so the cleanup sees the latest).
+  const proofsRef = useRef(proofs);
+  proofsRef.current = proofs;
   useEffect(() => {
     return () => {
-      if (preview) URL.revokeObjectURL(preview);
+      for (const p of proofsRef.current) {
+        if (p.url) URL.revokeObjectURL(p.url);
+      }
     };
-  }, [preview]);
+  }, []);
 
-  function pickFile(file: File | undefined) {
+  function addFiles(list: FileList | null) {
     setError(null);
-    if (!file) {
-      setProof(null);
-      setPreview(null);
-      return;
+    if (!list) return;
+    const next = [...proofs];
+    for (const file of Array.from(list)) {
+      if (next.length >= MAX_PROOFS) {
+        setError(`At most ${MAX_PROOFS} files can be attached.`);
+        break;
+      }
+      const isImage = IMAGE_TYPES.includes(file.type);
+      const isVideo = VIDEO_TYPES.includes(file.type);
+      if (!isImage && !isVideo) {
+        setError(
+          "Each proof must be a JPG, PNG or WEBP image, or an MP4/MOV/WEBM screen recording.",
+        );
+        continue;
+      }
+      if (isImage && file.size > IMAGE_MAX_BYTES) {
+        setError(`${file.name} is over 5 MB. Crop or re-save it and try again.`);
+        continue;
+      }
+      if (isVideo && file.size > VIDEO_MAX_BYTES) {
+        setError(`${file.name} is over 25 MB. Trim the recording and try again.`);
+        continue;
+      }
+      next.push({
+        file,
+        url: isImage ? URL.createObjectURL(file) : null,
+      });
     }
-    if (!PROOF_TYPES.includes(file.type)) {
-      setError("The screenshot must be a JPG, PNG or WEBP image.");
-      setProof(null);
-      setPreview(null);
-      return;
-    }
-    if (file.size > PROOF_MAX_BYTES) {
-      setError("That image is over 5 MB. Crop or re-save it and try again.");
-      setProof(null);
-      setPreview(null);
-      return;
-    }
-    setProof(file);
-    setPreview(URL.createObjectURL(file));
+    setProofs(next);
+  }
+
+  function removeProof(index: number) {
+    const removed = proofs[index];
+    if (removed?.url) URL.revokeObjectURL(removed.url);
+    setProofs(proofs.filter((_, i) => i !== index));
   }
 
   async function copyWallet() {
@@ -223,13 +249,13 @@ function ManualPayForm({
   }
 
   async function submit() {
-    if (!proof) return;
+    if (proofs.length === 0) return;
     setBusy(true);
     setError(null);
     try {
       const result = await api.submitManualPayment(token, {
         bookingId: booking.id,
-        proof,
+        proofs: proofs.map((p) => p.file),
         transactionId: transactionId.trim() || undefined,
         senderPhone: senderPhone.trim() || undefined,
       });
@@ -296,26 +322,60 @@ function ManualPayForm({
           className="mb-1 block text-sm font-medium text-ink-700"
           htmlFor="proof"
         >
-          Transaction screenshot
+          Proof of transfer{" "}
+          <span className="text-ink-300">(screenshots or a recording)</span>
         </label>
         <input
           id="proof"
           type="file"
-          accept={PROOF_TYPES.join(",")}
-          onChange={(e) => pickFile(e.target.files?.[0])}
-          className="w-full text-sm text-ink-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+          multiple
+          accept={[...IMAGE_TYPES, ...VIDEO_TYPES].join(",")}
+          onChange={(e) => {
+            addFiles(e.target.files);
+            // Allow re-picking the same file after removing it.
+            e.target.value = "";
+          }}
+          disabled={proofs.length >= MAX_PROOFS}
+          className="w-full text-sm text-ink-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-60"
         />
         <p className="mt-1 text-xs text-ink-500">
-          JPG, PNG or WEBP, up to 5 MB. Make sure the amount and transaction ID
-          are readable.
+          Up to {MAX_PROOFS} files: JPG/PNG/WEBP images (5 MB each) or an
+          MP4/MOV/WEBM screen recording (25 MB). Make sure the amount and
+          transaction ID are readable.
         </p>
-        {preview && (
-          // eslint-disable-next-line @next/next/no-img-element -- local object URL preview; next/image can't optimize a blob
-          <img
-            src={preview}
-            alt="Your transaction screenshot"
-            className="mt-3 max-h-64 rounded-lg border border-ink-100 object-contain"
-          />
+
+        {proofs.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {proofs.map((p, i) => (
+              <li
+                key={`${p.file.name}-${i}`}
+                className="flex items-center gap-3 rounded-lg border border-ink-100 p-2"
+              >
+                {p.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- local object URL preview; next/image can't optimize a blob
+                  <img
+                    src={p.url}
+                    alt={`Proof ${i + 1}`}
+                    className="h-14 w-14 rounded-md border border-ink-100 object-cover"
+                  />
+                ) : (
+                  <span className="flex h-14 w-14 items-center justify-center rounded-md bg-ink-50 text-xl">
+                    🎥
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate text-xs text-ink-700">
+                  {p.file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeProof(i)}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
@@ -356,7 +416,7 @@ function ManualPayForm({
 
       <button
         onClick={() => setConfirmingSubmit(true)}
-        disabled={busy || !proof}
+        disabled={busy || proofs.length === 0}
         className="tap w-full rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
       >
         {busy ? "Uploading…" : "I've sent it — submit proof"}
@@ -369,7 +429,7 @@ function ManualPayForm({
       <ConfirmDialog
         open={confirmingSubmit}
         title="Submit payment proof?"
-        message={`We'll send your screenshot to our team as proof of your ${cedis(info.amount)} transfer. They'll review and confirm it shortly.`}
+        message={`We'll send your proof to our team to confirm your ${cedis(info.amount)} transfer. They'll review and confirm it shortly.`}
         confirmLabel="Submit proof"
         cancelLabel="Not yet"
         onConfirm={() => {

@@ -242,14 +242,15 @@ export const api = {
     ),
 
   /**
-   * Records a transfer the student already made, with the screenshot as
-   * evidence. The booking stays pending until staff approve it.
+   * Records a transfer the student already made, with screenshots or a screen
+   * recording as evidence (1–3 files). The booking stays pending until staff
+   * approve it.
    */
   submitManualPayment: (
     token: string,
     input: {
       bookingId: string;
-      proof: File;
+      proofs: File[];
       transactionId?: string;
       senderPhone?: string;
       senderName?: string;
@@ -257,7 +258,7 @@ export const api = {
   ) => {
     const form = new FormData();
     form.set("bookingId", input.bookingId);
-    form.set("proof", input.proof);
+    for (const file of input.proofs) form.append("proofs", file);
     if (input.transactionId) form.set("transactionId", input.transactionId);
     if (input.senderPhone) form.set("senderPhone", input.senderPhone);
     if (input.senderName) form.set("senderName", input.senderName);

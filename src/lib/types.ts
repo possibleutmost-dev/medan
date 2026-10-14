@@ -80,6 +80,23 @@ export interface RoomSummary {
   gender: Gender;
   /** This room's own images, cover first. Empty → show the hostel's gallery. */
   photos: string[];
+  /** Same photos with ids, so manage screens can delete a specific one. */
+  photoItems: PhotoResponse[];
+  /**
+   * Individual beds for manage screens. Empty when the query didn't load
+   * them; availableBeds stays the number to trust.
+   */
+  beds: BedSummary[];
+}
+
+export type BedStatus = "available" | "reserved" | "occupied";
+
+export interface BedSummary {
+  id: string;
+  label: string;
+  status: BedStatus;
+  /** True when a booking holds this bed — resolve the booking, don't flip it. */
+  hasBooking: boolean;
 }
 
 /**
@@ -177,6 +194,8 @@ export interface PaymentResponse {
    * public image URL.
    */
   proofUrl: string | null;
+  /** Every proof in upload order (…/proof/0, /proof/1, …). Same auth rule. */
+  proofUrls: string[];
   senderPhone: string | null;
   senderName: string | null;
   providerTransactionId: string | null;
